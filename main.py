@@ -21,6 +21,7 @@ KEY = b'ThisIsASecretKey'  # 16-byte key for AES-128
 BLOCK_SIZE = 16
 
 def encrypt_audio(data):
+    """Encrypts audio data using AES encryption."""
     try:
         cipher = AES.new(KEY, AES.MODE_CBC)
         ct_bytes = cipher.encrypt(pad(data, BLOCK_SIZE))
@@ -30,6 +31,7 @@ def encrypt_audio(data):
         return None
 
 def decrypt_audio(data):
+    """Decrypts audio data using AES decryption."""
     try:
         iv = data[:BLOCK_SIZE]
         ct = data[BLOCK_SIZE:]
@@ -43,6 +45,7 @@ def decrypt_audio(data):
 # ========== MEDIA PLAYER WINDOW ==========
 
 class AudioPlayerWindow(QMainWindow):
+    """A simple window to play decrypted audio files."""
     def __init__(self, audio_file):
         super().__init__()
         self.setWindowTitle("🎵 Decrypted Audio Player")
@@ -72,6 +75,7 @@ class AudioPlayerWindow(QMainWindow):
 # ========== MAIN GUI CLASS ==========
 
 class VoiceApp(QWidget):
+    """The main application window for the Secure Voice Chat."""
     def __init__(self):
         super().__init__()
         self.audio = pyaudio.PyAudio()
@@ -80,6 +84,7 @@ class VoiceApp(QWidget):
         self.init_ui()
 
     def init_ui(self):
+        """Initializes the user interface."""
         self.setWindowTitle("🔒 Secure Voice Chat")
         self.setFixedSize(600, 500)
 
@@ -157,6 +162,7 @@ class VoiceApp(QWidget):
         QTimer.singleShot(100, self.animate_ui)
 
     def animate_ui(self):
+        """Animates the UI elements for a smooth appearance."""
         self.anim_group = QSequentialAnimationGroup(self)
         widgets = [self.status, self.conn_status, self.btn_send, self.btn_recv,
                    self.btn_toggle_save, self.btn_upload_encrypted, self.btn_close, self.visualizer]
@@ -178,6 +184,7 @@ class VoiceApp(QWidget):
         self.pulse_timer.start(100)
 
     def pulse_visualizer(self):
+        """Pulses the visualizer to indicate activity."""
         current = self.visualizer.value()
         next_value = current + (5 * self.pulse_direction)
         if next_value >= 100 or next_value <= 0:
@@ -185,9 +192,11 @@ class VoiceApp(QWidget):
         self.visualizer.setValue(next_value)
 
     def update_visualizer(self, level):
+        """Updates the visualizer with a given level."""
         self.visualizer.setValue(level)
 
     def toggle_audio_saving(self):
+        """Toggles audio saving functionality."""
         self.saving_enabled = not self.saving_enabled
         if self.saving_enabled:
             self.saved_frames = []
@@ -197,6 +206,7 @@ class VoiceApp(QWidget):
             self.btn_toggle_save.setText("💾 Enable Audio Saving")
 
     def save_audio_to_file(self):
+        """Saves the recorded audio frames to an encrypted file."""
         if not self.saved_frames:
             return
 
@@ -219,6 +229,7 @@ class VoiceApp(QWidget):
             self.status.setText("❌ Encryption failed, audio not saved.")
 
     def upload_and_play(self):
+        """Uploads an encrypted audio file, decrypts it, and plays it."""
         path, _ = QFileDialog.getOpenFileName(self, "Select Encrypted Audio", "", "Encrypted Audio (*.enc)")
         if not path:
             return
@@ -250,18 +261,21 @@ class VoiceApp(QWidget):
             print("❌ Decryption failed:", e)
 
     def start_sending(self):
+        """Starts the audio sending thread."""
         threading.Thread(target=self.send_audio, daemon=True).start()
         self.status.setText("🔐 Sending encrypted audio...")
         self.conn_status.setText("🟢 Connected to Receiver")
         self.conn_status.setStyleSheet("color: green;")
 
     def start_receiving(self):
+        """Starts the audio receiving thread."""
         threading.Thread(target=self.receive_audio, daemon=True).start()
         self.status.setText("🔓 Receiving and decrypting audio...")
         self.conn_status.setText("🟢 Connected to Sender")
         self.conn_status.setStyleSheet("color: green;")
 
     def send_audio(self):
+        """Sends audio data over the network, encrypting it before sending."""
         CHUNK = 1024
         RATE = 44100
         stream = self.audio.open(format=pyaudio.paInt16, channels=1,
@@ -296,6 +310,7 @@ class VoiceApp(QWidget):
             stream.close()
 
     def receive_audio(self):
+        """Receives audio data over the network, decrypting it after receiving."""
         server = socket.socket()
         server.bind(('localhost', 9999))
         server.listen(1)
