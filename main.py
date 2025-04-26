@@ -12,11 +12,8 @@ from PyQt5.QtWidgets import QGraphicsOpacityEffect
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-
 MAGIC_HEADER = b'SVCA'  # Stands for Secure Voice Chat App
-
 # ========== AES ENCRYPTION UTILS ==========
-
 KEY = b'ThisIsASecretKey'  # 16-byte key for AES-128
 BLOCK_SIZE = 16
 
@@ -41,7 +38,6 @@ def decrypt_audio(data):
     except Exception as e:
         print(f"Error decrypting audio: {e}")
         return None
-
 # ========== MEDIA PLAYER WINDOW ==========
 
 class AudioPlayerWindow(QMainWindow):
@@ -50,28 +46,22 @@ class AudioPlayerWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("🎵 Decrypted Audio Player")
         self.setGeometry(100, 100, 500, 120)
-
         self.player = QMediaPlayer()
         media_content = QMediaContent(QUrl.fromLocalFile(audio_file))
         self.player.setMedia(media_content)
-
         play_btn = QPushButton("▶️ Play")
         pause_btn = QPushButton("⏸ Pause")
         stop_btn = QPushButton("⏹ Stop")
-
         play_btn.clicked.connect(self.player.play)
         pause_btn.clicked.connect(self.player.pause)
         stop_btn.clicked.connect(self.player.stop)
-
         layout = QHBoxLayout()
         layout.addWidget(play_btn)
         layout.addWidget(pause_btn)
         layout.addWidget(stop_btn)
-
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
-
 # ========== MAIN GUI CLASS ==========
 
 class VoiceApp(QWidget):
@@ -120,44 +110,34 @@ class VoiceApp(QWidget):
                 width: 20px;
             }
         """)
-
         layout = QVBoxLayout()
         layout.setSpacing(18)
         layout.setContentsMargins(40, 40, 40, 40)
-
         self.status = QLabel("🎙️ Choose a mode:")
         self.status.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.status)
-
         self.conn_status = QLabel("🔴 Not Connected")
         self.conn_status.setAlignment(Qt.AlignCenter)
         self.conn_status.setStyleSheet("color: red;")
         layout.addWidget(self.conn_status)
-
         self.btn_send = QPushButton("🔊 Start Sending Audio")
         self.btn_send.clicked.connect(self.start_sending)
         layout.addWidget(self.btn_send)
-
         self.btn_recv = QPushButton("🎧 Start Receiving Audio")
         self.btn_recv.clicked.connect(self.start_receiving)
         layout.addWidget(self.btn_recv)
-
         self.btn_toggle_save = QPushButton("💾 Enable Audio Saving")
         self.btn_toggle_save.clicked.connect(self.toggle_audio_saving)
         layout.addWidget(self.btn_toggle_save)
-
         self.btn_upload_encrypted = QPushButton("📂 Upload Encrypted Audio to Play")
         self.btn_upload_encrypted.clicked.connect(self.upload_and_play)
         layout.addWidget(self.btn_upload_encrypted)
-
         self.btn_close = QPushButton("❌ Close Application")
         self.btn_close.clicked.connect(QApplication.instance().quit)
         layout.addWidget(self.btn_close)
-
         self.visualizer = QProgressBar(self)
         self.visualizer.setRange(0, 100)
         layout.addWidget(self.visualizer)
-
         self.setLayout(layout)
         QTimer.singleShot(100, self.animate_ui)
 
@@ -166,7 +146,6 @@ class VoiceApp(QWidget):
         self.anim_group = QSequentialAnimationGroup(self)
         widgets = [self.status, self.conn_status, self.btn_send, self.btn_recv,
                    self.btn_toggle_save, self.btn_upload_encrypted, self.btn_close, self.visualizer]
-
         for widget in widgets:
             effect = QGraphicsOpacityEffect(widget)
             widget.setGraphicsEffect(effect)
@@ -175,9 +154,7 @@ class VoiceApp(QWidget):
             anim.setStartValue(0.0)
             anim.setEndValue(1.0)
             self.anim_group.addAnimation(anim)
-
         self.anim_group.start()
-
         self.pulse_direction = 1
         self.pulse_timer = QTimer(self)
         self.pulse_timer.timeout.connect(self.pulse_visualizer)
@@ -213,10 +190,8 @@ class VoiceApp(QWidget):
         path, _ = QFileDialog.getSaveFileName(self, "Save Encrypted Audio", "", "Encrypted Audio (*.enc)")
         if not path:
             return
-
         raw_audio = b''.join(self.saved_frames)
         encrypted_audio = encrypt_audio(raw_audio)
-
         if encrypted_audio:
             try:
                 with open(path, 'wb') as f:
@@ -233,17 +208,13 @@ class VoiceApp(QWidget):
         path, _ = QFileDialog.getOpenFileName(self, "Select Encrypted Audio", "", "Encrypted Audio (*.enc)")
         if not path:
             return
-
         try:
             with open(path, 'rb') as f:
                 data = f.read()
-
             if not data.startswith(MAGIC_HEADER):
                 raise ValueError("Not a valid encrypted file from this app.")
-
             encrypted = data[len(MAGIC_HEADER):]
             decrypted = decrypt_audio(encrypted)
-
             if decrypted:
                 temp_path = "decrypted_temp.wav"
                 with wave.open(temp_path, 'wb') as wf:
@@ -251,7 +222,6 @@ class VoiceApp(QWidget):
                     wf.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
                     wf.setframerate(44100)
                     wf.writeframes(decrypted)
-
                 self.player_window = AudioPlayerWindow(temp_path)
                 self.player_window.show()
             else:
@@ -289,14 +259,12 @@ class VoiceApp(QWidget):
             self.conn_status.setText("🔴 Disconnected")
             self.conn_status.setStyleSheet("color: red;")
             return
-
         try:
             while True:
                 data = stream.read(CHUNK)
                 if self.saving_enabled:
                     self.saved_frames.append(data)
                 encrypted_data = encrypt_audio(data)
-
                 if encrypted_data:
                     try:
                         client.sendall(len(encrypted_data).to_bytes(4, 'big'))
@@ -315,17 +283,14 @@ class VoiceApp(QWidget):
         server.bind(('localhost', 9999))
         server.listen(1)
         print("Waiting for sender to connect...")
-
         client, _ = server.accept()
         print("✅ Connection established with sender.")
-
         try:
             while True:
                 try:
                     length_data = client.recv(4)
                     if not length_data:
                         break
-
                     length = int.from_bytes(length_data, 'big')
                     encrypted_audio = b""
                     while len(encrypted_audio) < length:
@@ -333,7 +298,6 @@ class VoiceApp(QWidget):
                         if not chunk:
                             break
                         encrypted_audio += chunk
-
                     decrypted_audio = decrypt_audio(encrypted_audio)
                     if decrypted_audio:
                         self.update_visualizer(50)  # Moderate activity during receiving
@@ -346,7 +310,6 @@ class VoiceApp(QWidget):
         finally:
             client.close()
             server.close()
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = VoiceApp()
