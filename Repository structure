@@ -1,0 +1,14 @@
+audio-encryption/
+├── .gitignore
+├── README.md
+├── decrypted_temp.wav
+├── main.py
+├── pyvenv.cfg
+├── received_decrypted_audio.wav
+├── received_decrypted_audio_temp.wav
+├── test1.wav
+├── test2.enc
+├── test3.enc
+├── test4.enc
+├── test5.enc
+├── test6.enc
